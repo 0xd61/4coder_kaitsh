@@ -6,7 +6,7 @@
 
 ## Credits
 
-Credtis to Allen Webster, the creator of 4coder [https://4coder.itch.io/4coder].
+Credtis to Allen Webster, the creator of 4coder <https://4coder.itch.io/4coder>.
 
 My custom layer uses customizations created by others. Please checkout their awesome work!
-- [https://github.com/ryanfleury/4coder_fleury]
+- <https://github.com/ryanfleury/4coder_fleury>
