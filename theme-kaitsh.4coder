@@ -1,0 +1,46 @@
+// Kaitshs Theme inspired by Jonathan Blows Emacs Theme
+
+defcolor_back = 0xFF012326;
+defcolor_margin = 0xFF01282B;
+defcolor_margin_hover = 0xFF012D30;
+defcolor_margin_active = 0xFF044E54;
+defcolor_list_item = {defcolor_margin, defcolor_back};
+defcolor_list_item_hover = {defcolor_margin_active, defcolor_margin};
+defcolor_list_item_active = {defcolor_margin_active, defcolor_margin_active};
+defcolor_cursor = 0xFF65D6AD;
+defcolor_at_cursor = defcolor_back;
+defcolor_highlight_cursor_line = 0xFF012D30;
+defcolor_highlight = defcolor_cursor;
+defcolor_mark = 0xFF199473;
+defcolor_text_default = 0xFFD6B58D;
+defcolor_at_highlight = defcolor_back;
+defcolor_comment = 0xFF31B72C;
+defcolor_comment_pop = {0xFFF7D070, 0xFFBA2525};
+defcolor_keyword = 0xFFE8E6E1;
+defcolor_str_constant = 0xFF2CB1BC;
+defcolor_char_constant = defcolor_str_constant;
+defcolor_int_constant = 0xFF65D6AD;
+defcolor_float_constant = defcolor_int_constant;
+defcolor_bool_constant = defcolor_bool_constant;
+defcolor_include = 0xFF857F72;
+defcolor_preproc = defcolor_include;
+defcolor_special_character = 0xFFFF0000;
+defcolor_ghost_character = 0xFFA39E93;
+
+defcolor_paste = 0xFFF7D070;
+defcolor_undo = 0xFF4098D7;
+
+defcolor_highlight_junk = 0xFF3A0000;
+defcolor_highlight_white = 0xFF003A3A;
+
+defcolor_bar = 0xFFC6A883;
+defcolor_bar_active = 0xFF504A40;
+defcolor_base = defcolor_back;
+defcolor_pop1 = 0xFF4098D7;
+defcolor_pop2 = 0xFFD64545;
+
+defcolor_back_cycle = { 0x20044E54, 0x200E7C86, 0x202CB1BC, 0x2054D1DB };
+defcolor_text_cycle = { 0xFFBA2525, 0xFF2680C2, 0xFFE9B949, 0xFF3EBD93 };
+
+defcolor_line_numbers_text = 0xFF625D52;
+defcolor_line_numbers_back = defcolor_highlight_cursor_line;
