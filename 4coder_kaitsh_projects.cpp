@@ -37,9 +37,7 @@ CUSTOM_DOC("List current projects and jump and load to one chosen by the user.")
                 if(*Source == '\n' && ProjectCount <= ArrayCount(Projects))
                 {
                     LatestProject->size = Source - LatestProject->str;
-                    printf("%s, %d\n", LatestProject->str, LatestProject->size);
-                    
-                    // Switch to new project string
+                    // NOTE(dgl): Switch to new project string
                     Source++;
                     LatestProject = &Projects[ProjectCount++];
                     LatestProject->str = Source;
@@ -69,12 +67,10 @@ CUSTOM_DOC("List current projects and jump and load to one chosen by the user.")
         {
             String_Const_u8 Name = {};
             lister_add_item(lister, Projects[Index], Name, &Projects[Index], 0);
-            printf("%s\n", Projects[Index].str);
         }
         
         code_index_unlock();
         
-        printf("HERE!!\n");
         Lister_Result l_result = run_lister(app, lister);
         String_Const_u8 *result = 0;
         
