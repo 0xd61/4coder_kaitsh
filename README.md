@@ -10,3 +10,4 @@ Credits to Allen Webster, the creator of 4coder <https://4coder.itch.io/4coder>.
 
 My custom layer uses customizations created by others. Please checkout their awesome work!
 - <https://github.com/ryanfleury/4coder_fleury>
+- <https://github.com/exanimusfan/4coder_extensions>

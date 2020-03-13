@@ -55,8 +55,10 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     BindMouseWheel(mouse_wheel_change_face_size, KeyCode_Control);
     // NOTE(dgl): Additional global custom keybindings
     {
-        Bind(open_panel_vsplit, KeyCode_7, KeyCode_Control, KeyCode_Shift);
+        Bind(open_panel_vsplit, KeyCode_7, KeyCode_Shift, KeyCode_Control);
         Bind(load_project, KeyCode_P, KeyCode_Control);
+        Bind(project_lister, KeyCode_P, KeyCode_Shift, KeyCode_Control);
+        Bind(jump_to_definition, KeyCode_J, KeyCode_Control);
     }
     
     SelectMap(file_id);
@@ -72,8 +74,8 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(move_down,              KeyCode_Down);
     Bind(move_left,              KeyCode_Left);
     Bind(move_right,             KeyCode_Right);
-    //Bind(seek_end_of_line,       KeyCode_End);
-    //Bind(seek_beginning_of_line, KeyCode_Home);
+    Bind(seek_end_of_line,       KeyCode_End);
+    Bind(seek_beginning_of_line, KeyCode_Home);
     Bind(page_up,                KeyCode_PageUp);
     Bind(page_down,              KeyCode_PageDown);
     Bind(goto_beginning_of_file, KeyCode_PageUp, KeyCode_Control);
@@ -100,7 +102,7 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(list_all_substring_locations_case_insensitive, KeyCode_F, KeyCode_Alt);
     Bind(goto_line,                   KeyCode_G, KeyCode_Control);
     Bind(list_all_locations_of_selection,  KeyCode_G, KeyCode_Control, KeyCode_Shift);
-    Bind(snippet_lister,              KeyCode_J, KeyCode_Control);
+    //Bind(snippet_lister,              KeyCode_J, KeyCode_Control);
     Bind(kill_buffer,                 KeyCode_K, KeyCode_Control, KeyCode_Shift);
     Bind(duplicate_line,              KeyCode_L, KeyCode_Control);
     Bind(cursor_mark_swap,            KeyCode_M, KeyCode_Control);
@@ -123,11 +125,12 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(if_read_only_goto_position,  KeyCode_Return);
     Bind(if_read_only_goto_position_same_panel, KeyCode_Return, KeyCode_Shift);
     Bind(view_jump_list_with_lister,  KeyCode_Period, KeyCode_Control, KeyCode_Shift);
-    // NOTE(dgl): Additional global custom keybindings
-    {
-        Bind(seek_end_of_line,  KeyCode_4, KeyCode_Control, KeyCode_Shift);
-        Bind(seek_beginning_of_line, KeyCode_0, KeyCode_Control);
-    }
+    // NOTE(dgl): Additional file custom keybindings
+    /*{
+        // TODO(dgl): Somehow does not work
+        Bind(seek_end_of_line,  KeyCode_Right, KeyCode_Shift,  KeyCode_Control);
+        Bind(seek_beginning_of_line, KeyCode_Left, KeyCode_Shift, KeyCode_Control);
+    }*/
     
     SelectMap(code_id);
     ParentMap(file_id);
@@ -161,4 +164,8 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(open_file_in_quotes,        KeyCode_1, KeyCode_Alt);
     Bind(open_matching_file_cpp,     KeyCode_2, KeyCode_Alt);
     Bind(write_zero_struct,          KeyCode_0, KeyCode_Control);
+    /*// NOTE(dgl): Additional code custom keybindings
+    {
+        
+    }*/
 }
