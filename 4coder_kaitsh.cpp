@@ -3,7 +3,7 @@
 Kaitshs 4coder custom layer
   
 // TODO(dgl):
-- [ ] Project list and quick select
+- [X] Project list and quick select
 - [ ] Smooth cursor (fleury)
 - [ ] Elixir Language
 
@@ -21,6 +21,7 @@ Kaitshs 4coder custom layer
 #define internal static
 #define local_persist static
 
+
 internal void
 KaitshRenderCaller(Application_Links *app, Frame_Info frame_info, View_ID view_id)
 {
@@ -35,7 +36,6 @@ custom_layer_init(Application_Links *app)
     default_framework_init(app);
     set_all_default_hooks(app);
     //set_custom_hook(app, HookID_RenderCaller,  KaitshRenderCaller);
-    
     mapping_init(tctx, &framework_mapping);
     KaitshSetCustomMapping(&framework_mapping, mapid_global, mapid_file, mapid_code);
 }

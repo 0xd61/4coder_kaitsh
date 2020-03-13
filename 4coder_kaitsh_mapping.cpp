@@ -118,7 +118,7 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(paste_and_indent,            KeyCode_V, KeyCode_Control);
     Bind(paste_next_and_indent,       KeyCode_V, KeyCode_Control, KeyCode_Shift);
     Bind(cut,                         KeyCode_X, KeyCode_Control);
-    Bind(redo,                        KeyCode_Y, KeyCode_Control);
+    //Bind(redo,                        KeyCode_Y, KeyCode_Control);
     Bind(undo,                        KeyCode_Z, KeyCode_Control);
     Bind(view_buffer_other_panel,     KeyCode_1, KeyCode_Control);
     Bind(swap_panels,                 KeyCode_2, KeyCode_Control);
@@ -126,11 +126,12 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(if_read_only_goto_position_same_panel, KeyCode_Return, KeyCode_Shift);
     Bind(view_jump_list_with_lister,  KeyCode_Period, KeyCode_Control, KeyCode_Shift);
     // NOTE(dgl): Additional file custom keybindings
-    /*{
+    {
         // TODO(dgl): Somehow does not work
-        Bind(seek_end_of_line,  KeyCode_Right, KeyCode_Shift,  KeyCode_Control);
-        Bind(seek_beginning_of_line, KeyCode_Left, KeyCode_Shift, KeyCode_Control);
-    }*/
+        //Bind(seek_end_of_line,  KeyCode_Right, KeyCode_Shift,  KeyCode_Control);
+        //Bind(seek_beginning_of_line, KeyCode_Left, KeyCode_Shift, KeyCode_Control);
+        Bind(redo, KeyCode_Z, KeyCode_Control, KeyCode_Shift);
+    }
     
     SelectMap(code_id);
     ParentMap(file_id);
