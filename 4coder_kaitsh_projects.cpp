@@ -84,10 +84,4 @@ CUSTOM_DOC("List current projects and jump and load to one chosen by the user.")
             }
         }
     }
-    /* String_Const_u8 Projects[] = {
-        string_u8_litexpr("/home/danielg/Sync/4coder/"),
-        string_u8_litexpr("/home/danielg/Code/C/handmade_hero/"),
-        string_u8_litexpr("/home/danielg/Code/Elixir/ex_consulta_saldo/")
-    }; */
-    
 }
