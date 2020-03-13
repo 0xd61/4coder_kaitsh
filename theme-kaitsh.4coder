@@ -1,4 +1,5 @@
 // Kaitshs Theme inspired by Jonathan Blows Emacs Theme
+// The colors are mostly from Palette 7 (Refactoring UI)
 
 defcolor_back = 0xFF012326;
 defcolor_margin = 0xFF01282B;
