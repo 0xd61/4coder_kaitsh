@@ -7,8 +7,8 @@ FleuryDoTheCursorInterpolation(Application_Links *app, Frame_Info frame_info,
     float x_change = target.x0 - rect->x0;
     float y_change = target.y0 - rect->y0;
     
-    float cursor_size_x = (target.x1 - target.x0);
-    float cursor_size_y = (target.y1 - target.y0) * (1 + fabsf(y_change) / 60.f);
+    float cursor_size_x = (target.x1 - target.x0) * (1 + fabsf(x_change) / 180.f);
+    float cursor_size_y = (target.y1 - target.y0) * (1 + fabsf(y_change) / 120.f);
     
     b32 should_animate_cursor = !global_battery_saver;
     if(should_animate_cursor)
