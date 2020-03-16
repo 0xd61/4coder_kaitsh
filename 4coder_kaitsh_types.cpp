@@ -1,0 +1,1 @@
+global b32 global_battery_saver = 0;
