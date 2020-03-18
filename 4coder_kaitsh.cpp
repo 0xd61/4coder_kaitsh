@@ -5,6 +5,7 @@ Kaitshs 4coder custom layer
 // TODO(dgl):
 - [X] Project list and quick select
 - [X] Smooth cursor (fleury)
+- [ ] Calc in Comments (fleury)
 - [ ] Elixir Language
 
 */
@@ -16,6 +17,7 @@ Kaitshs 4coder custom layer
 
 #include "4coder_kaitsh_types.cpp"
 #include "4coder_kaitsh_projects.cpp"
+#include "4coder_kaitsh_calc.cpp"
 #include "4coder_kaitsh_cursor.cpp"
 #include "4coder_kaitsh_mapping.cpp"
 
@@ -179,6 +181,7 @@ KaitshRenderBuffer(Application_Links *app, View_ID view_id, Face_ID face_id,
     switch (fcoder_mode){
         case FCoderMode_Original:
         {
+            // NOTE(dgl): Smooth cursor
             KaitshDrawCursorMarkHighlight(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness, frame_info);
             // draw_original_4coder_style_cursor_mark_highlight(app, view_id, is_active_view, buffer, text_layout_id, cursor_roundness, mark_thickness);
         }break;
@@ -195,6 +198,9 @@ KaitshRenderBuffer(Application_Links *app, View_ID view_id, Face_ID face_id,
     draw_text_layout_default(app, text_layout_id);
     
     draw_set_clip(app, prev_clip);
+    
+    // NOTE(dgl): Draw calculations in comments
+    KaitshRenderCommentCalc(app, buffer, text_layout_id);
 }
 
 internal void
