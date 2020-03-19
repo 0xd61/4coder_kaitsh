@@ -1,5 +1,3 @@
-// TODO(dgl): Do bondary check on node buffer and operatorstack
-
 enum CalcTokenType
 {
     CALC_TOKEN_TYPE_Invalid,
@@ -508,10 +506,7 @@ RenderCommentCode(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_
     // TODO(dgl): I don't like this solution. Maybe I have a better solution in the future.
     if(Tokenizer.At[2] == 'c')
     {
-        // TODO(dgl): Segfault when starting calcualtion with (
-        // TODO(dgl): Stacksmashing when stack not large enough
-        // In theory we should not store the nodes, if there is not enough memory
-        u8 MemoryBuffer[2*1024*1024];
+        u8 MemoryBuffer[1024*1024];
         CalcMemory Memory = {};
         Memory.Buffer = (void *)MemoryBuffer;
         Memory.Size = ArrayCount(MemoryBuffer);
@@ -530,7 +525,17 @@ RenderCommentCode(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_
                 
                 char ResultBuffer[256];
                 String_Const_u8 ResultString = {(u8 *)ResultBuffer};
-                ResultString.size = sprintf(ResultBuffer, "=> %f", Result);
+                
+                if((Memory.NodeBufferPtr + 1) < (CalcNode *)Memory.OperatorStackPtr)
+                {
+                    ResultString.size = sprintf(ResultBuffer, "=> %f", Result);
+                }
+                else
+                {
+                    // NOTE(dgl): Currently for debugging. Output may change in the future
+                    ResultString.size = sprintf(ResultBuffer, "=> Buffer Overflow");
+                }
+                
                 
                 Vec2_f32 ResultPosition = {0};
                 
