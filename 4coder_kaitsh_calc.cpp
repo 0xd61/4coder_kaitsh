@@ -228,14 +228,18 @@ ParseNode(CalcTokenizer *Tokenizer, CalcToken *Token)
 }
 
 
-internal void
+internal int
 PushOperator(CalcMemory *Memory, CalcNode *Node)
 {
-    Assert(((CalcNode **)Memory->NodeBufferPtr < (Memory->OperatorStackPtr - 1)) &&
-           (Memory->OperatorStackPtr <= (CalcNode **)((u8 *)Memory->Buffer + Memory->Size)));
-    
-    *Memory->OperatorStackPtr = Node;
-    Memory->OperatorStackPtr--;
+    int Result = -1;
+    if(((CalcNode **)Memory->NodeBufferPtr < (Memory->OperatorStackPtr - 1)) &&
+       (Memory->OperatorStackPtr <= (CalcNode **)((u8 *)Memory->Buffer + Memory->Size)))
+    {
+        *Memory->OperatorStackPtr = Node;
+        Memory->OperatorStackPtr--;
+        Result = 0;
+    }
+    return Result;
 }
 
 internal CalcNode *
@@ -276,77 +280,97 @@ ParseLineToPostfix(CalcTokenizer *Tokenizer, CalcMemory *Memory, void *Buffer, u
     // NOTE(dgl): Temp starting point of the list, because we only assign nodes to the "Next" field of the stucture.
     CalcNode TmpRoot = {};
     CalcNode *Last = &TmpRoot;
+    b32 ParsingError = false;
     
     CalcToken Token;
-    while(Tokenizer->At < ((u8 *)Buffer + Size))
+    while(!ParsingError && Tokenizer->At < ((u8 *)Buffer + Size))
     {
         Token = GetToken(Tokenizer);
         if(Token.Type == CALC_TOKEN_TYPE_NewLine)
         {
-            break;
+            ParsingError = true;
         }
-        
-        CalcNode *Node = Memory->NodeBufferPtr++;
-        Assert(Memory->NodeBufferPtr < (CalcNode *)Memory->OperatorStackPtr);
         
         CalcNode Parsed = ParseNode(Tokenizer, &Token);
-        Node->Type = Parsed.Type;
-        Node->Value = Parsed.Value;
-        Node->Next = 0;
-        
-        switch(Node->Type)
+        if(Parsed.Type == CALC_NODE_TYPE_Error)
         {
-            case CALC_NODE_TYPE_OpenParen:
-            {
-                PushOperator(Memory, Node);
-            } break;
-            case CALC_NODE_TYPE_CloseParen:
-            {
-                CalcNode *Next;
-                while((Next = PopOperator(Memory)) &&
-                      (Next->Type != CALC_NODE_TYPE_OpenParen))
-                {
-                    Last->Next = Next;
-                    Last = Next;
-                }
-                
-            } break;
-            case CALC_NODE_TYPE_Add:
-            case CALC_NODE_TYPE_Subtract:
-            case CALC_NODE_TYPE_Multiply:
-            case CALC_NODE_TYPE_Divide:
-            case CALC_NODE_TYPE_Modulus:
-            case CALC_NODE_TYPE_RaiseToPower:
-            {
-                while(!OperatorStackEmpty(Memory) && (CalcOperatorPrecedence(PeekOperator(Memory)->Type) >= CalcOperatorPrecedence(Node->Type)))
-                {
-                    CalcNode *Next = PopOperator(Memory);
-                    Last->Next = Next;
-                    Last = Next;
-                }
-                PushOperator(Memory, Node);
-            } break;
-            case CALC_NODE_TYPE_Constant:
-            {
-                Last->Next = Node;
-                Last = Node;
-            } break;
-            default:
-            {
-                // TODO(dgl): ignore everything else
-            } break;
+            ParsingError = true;
         }
         
+        CalcNode *Node;
+        if(Memory->NodeBufferPtr < (CalcNode *)Memory->OperatorStackPtr)
+        {
+            Node = Memory->NodeBufferPtr++;
+            Node->Type = Parsed.Type;
+            Node->Value = Parsed.Value;
+            Node->Next = 0;
+        }
+        else
+        {
+            ParsingError = true;
+        }
+        
+        if(!ParsingError)
+        {
+            switch(Node->Type)
+            {
+                case CALC_NODE_TYPE_OpenParen:
+                {
+                    if(PushOperator(Memory, Node) < 0)
+                    {
+                        ParsingError = true;
+                    }
+                } break;
+                case CALC_NODE_TYPE_CloseParen:
+                {
+                    CalcNode *Next;
+                    while((Next = PopOperator(Memory)) &&
+                          (Next->Type != CALC_NODE_TYPE_OpenParen))
+                    {
+                        Last->Next = Next;
+                        Last = Next;
+                    }
+                    
+                } break;
+                case CALC_NODE_TYPE_Add:
+                case CALC_NODE_TYPE_Subtract:
+                case CALC_NODE_TYPE_Multiply:
+                case CALC_NODE_TYPE_Divide:
+                case CALC_NODE_TYPE_Modulus:
+                case CALC_NODE_TYPE_RaiseToPower:
+                {
+                    while(!OperatorStackEmpty(Memory) && (CalcOperatorPrecedence(PeekOperator(Memory)->Type) >= CalcOperatorPrecedence(Node->Type)))
+                    {
+                        CalcNode *Next = PopOperator(Memory);
+                        Last->Next = Next;
+                        Last = Next;
+                    }
+                    if(PushOperator(Memory, Node) < 0)
+                    {
+                        ParsingError = true;
+                    }
+                } break;
+                case CALC_NODE_TYPE_Constant:
+                {
+                    Last->Next = Node;
+                    Last = Node;
+                } break;
+                default:
+                {
+                    // TODO(dgl): ignore everything else
+                } break;
+            }
+        }
+        
+        // NOTE(dgl): Empty operator stack
+        while(!OperatorStackEmpty(Memory))
+        {
+            CalcNode *Next = PopOperator(Memory);
+            Last->Next = Next;
+            Last = Next;
+        }
+        Assert(Memory->OperatorStackPtr == (CalcNode **)((u8 *)Memory->Buffer + Memory->Size));
     }
-    
-    // NOTE(dgl): Empty operator stack
-    while(!OperatorStackEmpty(Memory))
-    {
-        CalcNode *Next = PopOperator(Memory);
-        Last->Next = Next;
-        Last = Next;
-    }
-    Assert(Memory->OperatorStackPtr == (CalcNode **)((u8 *)Memory->Buffer + Memory->Size));
     
     // NOTE(dgl): The first "real" node is the one after root
     return(TmpRoot.Next);
@@ -357,7 +381,7 @@ EvaluatePostfix(CalcMemory *Memory, CalcNode *Start)
 {
     CalcNode *Node = Start;
     b32 IsValid = true;
-    while(IsValid && Node)
+    while(IsValid && (Node != 0))
     {
         // TODO(dgl): Compress calculation
         switch(Node->Type)
@@ -471,9 +495,8 @@ EvaluatePostfix(CalcMemory *Memory, CalcNode *Start)
     }
     
     double Result = NAN;
-    if(IsValid)
+    if(IsValid && !OperatorStackEmpty(Memory))
     {
-        Assert(!OperatorStackEmpty(Memory));
         Node = PopOperator(Memory);
         Result = Node->Value;
     }
@@ -491,15 +514,18 @@ RenderCommentCode(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_
     if(Tokenizer.At[2] == 'c')
     {
         // TODO(dgl): Segfault when starting calcualtion with (
+        // TODO(dgl): Stacksmashing when stack not large enough
+        // In theory we should not store the nodes, if there is not enough memory
         u8 MemoryBuffer[2*1024*1024];
         CalcMemory Memory = {};
         Memory.Buffer = (void *)MemoryBuffer;
         Memory.Size = ArrayCount(MemoryBuffer);
         Memory.NodeBufferPtr = (CalcNode *)Memory.Buffer;
-        Memory.OperatorStackPtr = (CalcNode **)((u8 *)Memory.Buffer + Memory.Size);
         
         while(Tokenizer.At < (TextBuffer.str + TextBuffer.size))
         {
+            // NOTE(dgl): Reset OperatorStackPtr for each calculation
+            Memory.OperatorStackPtr = (CalcNode **)((u8 *)Memory.Buffer + Memory.Size);
             CalcNode *Root = ParseLineToPostfix(&Tokenizer, &Memory, TextBuffer.data, TextBuffer.size);
             
             if(Root)
