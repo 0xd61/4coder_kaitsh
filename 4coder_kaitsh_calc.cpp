@@ -484,20 +484,20 @@ EvaluatePostfix(CalcMemory *Memory, CalcNode *Start)
 internal void
 RenderCommentCode(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_layout_id, i64 Position, String_Const_u8 TextBuffer)
 {
-    // TODO(dgl): Segfault when starting calcualtion with (
-    u8 MemoryBuffer[2*1024];
-    CalcMemory Memory = {};
-    Memory.Buffer = (void *)MemoryBuffer;
-    Memory.Size = ArrayCount(MemoryBuffer);
-    Memory.NodeBufferPtr = (CalcNode *)Memory.Buffer;
-    Memory.OperatorStackPtr = (CalcNode **)((u8 *)Memory.Buffer + Memory.Size);
-    
     CalcTokenizer Tokenizer = {};
     Tokenizer.At = TextBuffer.str;
     
     // TODO(dgl): I don't like this solution. Maybe I have a better solution in the future.
-    if(Tokenizer.At[2] = 'c')
+    if(Tokenizer.At[2] == 'c')
     {
+        // TODO(dgl): Segfault when starting calcualtion with (
+        u8 MemoryBuffer[2*1024*1024];
+        CalcMemory Memory = {};
+        Memory.Buffer = (void *)MemoryBuffer;
+        Memory.Size = ArrayCount(MemoryBuffer);
+        Memory.NodeBufferPtr = (CalcNode *)Memory.Buffer;
+        Memory.OperatorStackPtr = (CalcNode **)((u8 *)Memory.Buffer + Memory.Size);
+        
         while(Tokenizer.At < (TextBuffer.str + TextBuffer.size))
         {
             CalcNode *Root = ParseLineToPostfix(&Tokenizer, &Memory, TextBuffer.data, TextBuffer.size);
@@ -528,7 +528,7 @@ RenderCommentCode(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_
     }
     else
     {
-        // TODO(dgl): Do nothing if not a calc comment
+        // TODO(dgl): Do nothing if it is not a calc comment
     }
 }
 
