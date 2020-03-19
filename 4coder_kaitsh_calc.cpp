@@ -12,7 +12,8 @@ enum CalcTokenType
     CALC_TOKEN_TYPE_Percent,
     CALC_TOKEN_TYPE_Circumflex,
     CALC_TOKEN_TYPE_OpenParen,
-    CALC_TOKEN_TYPE_CloseParen
+    CALC_TOKEN_TYPE_CloseParen,
+    CALC_TOKEN_TYPE_NewLine
 };
 
 // NOTE(dgl): Cool trick from Ryan Fleury (https://github.com/ryanfleury) to define enum and a corresponding value at the same place. First we create a list containing a preprocessor functions which take the values. Then we create an enum with the types. In the enum we define the preprocessor function used in the list and we call the list. And undefine the function, so we can redefine it. For the other value we create a function with a static table. To create this table we define the preprocessor function again, call the list and undefine the funciton again.
@@ -51,7 +52,11 @@ CalcOperatorPrecedence(CalcNodeType type)
 struct CalcToken
 {
     CalcTokenType Type;
-    char *String;
+    union
+    {
+        u8 *Data;
+        char *String;
+    };
     int Length;
 };
 
@@ -73,7 +78,7 @@ struct CalcMemory
 
 struct CalcTokenizer
 {
-    char *At;
+    u8 *At;
 };
 
 b32 IsNumeric(char c)
@@ -92,7 +97,7 @@ GetToken(CalcTokenizer *Tokenizer)
 {
     CalcToken Token = {};
     Token.Type = CALC_TOKEN_TYPE_Invalid;
-    Token.String = Tokenizer->At;
+    Token.Data = Tokenizer->At;
     Token.Length = 1;
     
     char C = *Tokenizer->At;
@@ -107,6 +112,7 @@ GetToken(CalcTokenizer *Tokenizer)
         case '^': { Token.Type = CALC_TOKEN_TYPE_Circumflex; } break;
         case '(': { Token.Type = CALC_TOKEN_TYPE_OpenParen; } break;
         case ')': { Token.Type = CALC_TOKEN_TYPE_CloseParen; } break;
+        case '\n': { Token.Type = CALC_TOKEN_TYPE_NewLine; } break;
         default:
         {
             if(IsNumeric(C))
@@ -117,7 +123,7 @@ GetToken(CalcTokenizer *Tokenizer)
                       (*Tokenizer->At == 'f'))
                 {
                     ++Tokenizer->At;
-                    Token.Length = Tokenizer->At - Token.String;
+                    Token.Length = Tokenizer->At - Token.Data;
                 }
             }
             else if(IsAlpha(C))
@@ -126,17 +132,7 @@ GetToken(CalcTokenizer *Tokenizer)
                 while(IsAlpha(*Tokenizer->At))
                 {
                     ++Tokenizer->At;
-                    Token.Length = Tokenizer->At - Token.String;
-                }
-            }
-            else if(C == ';' && *Tokenizer->At == 'c')
-            {
-                // TODO(dgl): Guard against overflow
-                Token.Type = CALC_TOKEN_TYPE_String;
-                while(*Tokenizer->At != ';')
-                {
-                    ++Tokenizer->At;
-                    Token.Length = Tokenizer->At - Token.String;
+                    Token.Length = Tokenizer->At - Token.Data;
                 }
             }
             else
@@ -275,22 +271,25 @@ OperatorStackEmpty(CalcMemory *Memory)
 }
 
 internal CalcNode *
-ParseTextToPostfix(CalcMemory *Memory, void *Buffer, u64 Size)
+ParseLineToPostfix(CalcTokenizer *Tokenizer, CalcMemory *Memory, void *Buffer, u64 Size)
 {
     // NOTE(dgl): Temp starting point of the list, because we only assign nodes to the "Next" field of the stucture.
     CalcNode TmpRoot = {};
     CalcNode *Last = &TmpRoot;
     
-    CalcTokenizer Tokenizer = {};
-    Tokenizer.At = (char*)Buffer;
-    
-    // TODO(dgl): Check if it is <= or <
-    while((u8 *)Tokenizer.At <= ((u8 *)Buffer + Size) && ((Memory->NodeBufferPtr + 1) < (CalcNode *)Memory->OperatorStackPtr))
+    CalcToken Token;
+    while(Tokenizer->At < ((u8 *)Buffer + Size))
     {
-        CalcToken Token = GetToken(&Tokenizer);
-        CalcNode *Node = Memory->NodeBufferPtr++;
+        Token = GetToken(Tokenizer);
+        if(Token.Type == CALC_TOKEN_TYPE_NewLine)
+        {
+            break;
+        }
         
-        CalcNode Parsed = ParseNode(&Tokenizer, &Token);
+        CalcNode *Node = Memory->NodeBufferPtr++;
+        Assert(Memory->NodeBufferPtr < (CalcNode *)Memory->OperatorStackPtr);
+        
+        CalcNode Parsed = ParseNode(Tokenizer, &Token);
         Node->Type = Parsed.Type;
         Node->Value = Parsed.Value;
         Node->Next = 0;
@@ -483,9 +482,9 @@ EvaluatePostfix(CalcMemory *Memory, CalcNode *Start)
 }
 
 internal void
-RenderCommentCode(Application_Links *app, Buffer_ID buffer, i64 Position, String_Const_u8 TextBuffer)
+RenderCommentCode(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_layout_id, i64 Position, String_Const_u8 TextBuffer)
 {
-    // TODO(dgl): Segmentationfault when starting calcualtion with (
+    // TODO(dgl): Segfault when starting calcualtion with (
     u8 MemoryBuffer[2*1024];
     CalcMemory Memory = {};
     Memory.Buffer = (void *)MemoryBuffer;
@@ -493,27 +492,43 @@ RenderCommentCode(Application_Links *app, Buffer_ID buffer, i64 Position, String
     Memory.NodeBufferPtr = (CalcNode *)Memory.Buffer;
     Memory.OperatorStackPtr = (CalcNode **)((u8 *)Memory.Buffer + Memory.Size);
     
-    CalcNode *Root = ParseTextToPostfix(&Memory, TextBuffer.data, TextBuffer.size);
+    CalcTokenizer Tokenizer = {};
+    Tokenizer.At = TextBuffer.str;
     
-    if(Root)
+    // TODO(dgl): I don't like this solution. Maybe I have a better solution in the future.
+    if(Tokenizer.At[2] = 'c')
     {
-        // TODO(dgl): Support calculating with variables
-        double Result = EvaluatePostfix(&Memory, Root);
-        
-        char ResultBuffer[256];
-        String_Const_u8 ResultString =
+        while(Tokenizer.At < (TextBuffer.str + TextBuffer.size))
         {
-            (u8 *)ResultBuffer,
-        };
-        
-        // NOTE(dgl): Test between ;c and ; is parsed as normal text
-        ResultString.size = sprintf(ResultBuffer, ";c %f;", Result);
-        
-        i64 EndOfComment = Position + TextBuffer.size;
-        Range_i64 Range = Ii64_size(EndOfComment, 0);
-        
-        // TODO(dgl): Come up with an Idea how to render everyting
-        //buffer_replace_range(app, buffer, Range, ResultString);
+            CalcNode *Root = ParseLineToPostfix(&Tokenizer, &Memory, TextBuffer.data, TextBuffer.size);
+            
+            if(Root)
+            {
+                // TODO(dgl): Support calculating with variables or functions
+                double Result = EvaluatePostfix(&Memory, Root);
+                
+                char ResultBuffer[256];
+                String_Const_u8 ResultString = {(u8 *)ResultBuffer};
+                ResultString.size = sprintf(ResultBuffer, "=> %f", Result);
+                
+                Vec2_f32 ResultPosition = {0};
+                
+                u64 PositionOffset = Tokenizer.At - 1 - TextBuffer.str;
+                u64 LastCharacterPosition = Position + PositionOffset;
+                Rect_f32 LastCharacterRect = text_layout_character_on_screen(app, text_layout_id, LastCharacterPosition);
+                
+                ResultPosition.x = LastCharacterRect.x0;
+                ResultPosition.y = LastCharacterRect.y0;
+                ResultPosition.x += 15;
+                
+                ARGB_Color Color = finalize_color(defcolor_comment, 1);
+                draw_string(app, get_face_id(app, buffer), ResultString, ResultPosition, Color);
+            }
+        }
+    }
+    else
+    {
+        // TODO(dgl): Do nothing if not a calc comment
     }
 }
 
@@ -541,7 +556,8 @@ KaitshRenderCommentCalc(Application_Links *app, Buffer_ID buffer, Text_Layout_ID
             String_Const_u8 tail = {};
             if(token_it_check_and_get_lexeme(app, scratch, &it, TokenBaseKind_Comment, &tail))
             {
-                RenderCommentCode(app, buffer, token->pos, tail);
+                // TODO(dgl): Render only Calc Comment
+                RenderCommentCode(app, buffer, text_layout_id, token->pos, tail);
             }
             if(!token_it_inc_non_whitespace(&it))
             {
