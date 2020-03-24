@@ -42,19 +42,6 @@ CUSTOM_DOC("Cut the line the on which the cursor sits.")
     }
 }
 
-function Lister_Activation_Code
-KaitshListerRefreshHandler(Application_Links *app, Lister *lister)
-{
-    Lister_Activation_Code result = ListerActivation_Continue;
-    if(lister != 0)
-    {
-        lister_update_filtered_list(app, lister);
-        lister->item_index = 0;
-        lister_zero_scroll(lister);
-    }
-    return(result);
-}
-
 CUSTOM_UI_COMMAND_SIG(jump_to_definition_of_identifier)
 CUSTOM_DOC("Jump to the definition of the keyword under the cursor.")
 {
