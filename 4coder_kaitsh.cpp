@@ -42,6 +42,79 @@ CUSTOM_DOC("Cut the line the on which the cursor sits.")
     }
 }
 
+function Lister_Activation_Code
+KaitshListerRefreshHandler(Application_Links *app, Lister *lister)
+{
+    Lister_Activation_Code result = ListerActivation_Continue;
+    if(lister != 0)
+    {
+        lister_update_filtered_list(app, lister);
+        lister->item_index = 0;
+        lister_zero_scroll(lister);
+    }
+    return(result);
+}
+
+CUSTOM_UI_COMMAND_SIG(jump_to_definition_of_identifier)
+CUSTOM_DOC("Jump to the definition of the keyword under the cursor.")
+{
+    char *query = "Definition:";
+    
+    Scratch_Block scratch(app);
+    Lister_Block lister(app, scratch);
+    String_Const_u8 needle = push_token_or_word_under_active_cursor(app, scratch);
+    lister_set_query(lister, query);
+    lister_set_key(lister, needle);
+    lister_set_text_field(lister, needle);
+    lister_set_default_handlers(lister);
+    
+    
+    code_index_lock();
+    for (Buffer_ID buffer = get_buffer_next(app, 0, Access_Always);
+         buffer != 0;
+         buffer = get_buffer_next(app, buffer, Access_Always)){
+        Code_Index_File *file = code_index_get_file(buffer);
+        if (file != 0){
+            for (i32 i = 0; i < file->note_array.count; i += 1){
+                Code_Index_Note *note = file->note_array.ptrs[i];
+                
+                Tiny_Jump *jump = push_array(scratch, Tiny_Jump, 1);
+                jump->buffer = buffer;
+                jump->pos = note->pos.first;
+                
+                String_Const_u8 sort = {};
+                switch (note->note_kind){
+                    case CodeIndexNote_Type:
+                    {
+                        sort = string_u8_litexpr("type");
+                    }break;
+                    case CodeIndexNote_Function:
+                    {
+                        sort = string_u8_litexpr("function");
+                    }break;
+                    case CodeIndexNote_Macro:
+                    {
+                        sort = string_u8_litexpr("macro");
+                    }break;
+                }
+                lister_add_item(lister, note->text, sort, jump, 0);
+            }
+        }
+    }
+    code_index_unlock();
+    
+    Lister_Result l_result = run_lister(app, lister);
+    Tiny_Jump result = {};
+    if (!l_result.canceled && l_result.user_data != 0){
+        block_copy_struct(&result, (Tiny_Jump*)l_result.user_data);
+    }
+    
+    if (result.buffer != 0){
+        View_ID view = get_this_ctx_view(app, Access_Always);
+        jump_to_location(app, view, result.buffer, result.pos);
+    }
+}
+
 internal void
 KaitshDrawFileBar(Application_Links *app, View_ID view_id, Buffer_ID buffer, Face_ID face_id, Rect_f32 bar)
 {

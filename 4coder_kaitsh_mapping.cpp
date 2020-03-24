@@ -59,6 +59,7 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
         Bind(load_project, KeyCode_P, KeyCode_Control);
         Bind(project_lister, KeyCode_P, KeyCode_Shift, KeyCode_Control);
         Bind(jump_to_definition, KeyCode_J, KeyCode_Control);
+        Bind(jump_to_definition_of_identifier, KeyCode_J, KeyCode_Control, KeyCode_Shift);
     }
     
     SelectMap(file_id);
