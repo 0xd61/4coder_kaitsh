@@ -35,9 +35,9 @@ CUSTOM_DOC("Cut the line the on which the cursor sits.")
     i64 pos = view_get_cursor_pos(app, view);
     i64 line = get_line_number_from_pos(app, buffer, pos);
     Range_i64 range = get_line_pos_range(app, buffer, line);
-    range.end += 1;
     
     if (clipboard_post_buffer_range(app, 0, buffer, range)){
+        range.end += 1;
         buffer_replace_range(app, buffer, range, string_u8_empty);
     }
 }
