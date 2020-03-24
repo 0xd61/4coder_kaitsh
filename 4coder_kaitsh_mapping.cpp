@@ -128,10 +128,8 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(view_jump_list_with_lister,  KeyCode_Period, KeyCode_Control, KeyCode_Shift);
     // NOTE(dgl): Additional file custom keybindings
     {
-        // TODO(dgl): Somehow does not work
-        //Bind(seek_end_of_line,  KeyCode_Right, KeyCode_Shift,  KeyCode_Control);
-        //Bind(seek_beginning_of_line, KeyCode_Left, KeyCode_Shift, KeyCode_Control);
         Bind(redo, KeyCode_Z, KeyCode_Control, KeyCode_Shift);
+        Bind(cut_line, KeyCode_X, KeyCode_Control, KeyCode_Shift);
     }
     
     SelectMap(code_id);
@@ -166,8 +164,9 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(open_file_in_quotes,        KeyCode_1, KeyCode_Alt);
     Bind(open_matching_file_cpp,     KeyCode_2, KeyCode_Alt);
     Bind(write_zero_struct,          KeyCode_0, KeyCode_Control);
-    /*// NOTE(dgl): Additional code custom keybindings
+    // NOTE(dgl): Additional code custom keybindings
     {
-        
-    }*/
+        Bind(seek_end_of_line,  KeyCode_Right, KeyCode_Shift,  KeyCode_Control);
+        Bind(seek_beginning_of_line, KeyCode_Left, KeyCode_Shift, KeyCode_Control);
+    }
 }
