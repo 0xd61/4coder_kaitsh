@@ -5,7 +5,7 @@
 // TODO(dgl):
 - [X] Project list and quick select
 - [X] Smooth cursor (fleury)
-- [ ] Calc in Comments (fleury)
+- [X] Calc in Comments
 - [ ] Elixir Language
 
 */
@@ -21,13 +21,13 @@
 #include "4coder_kaitsh_cursor.cpp"
 #include "4coder_kaitsh_mapping.cpp"
 
-CUSTOM_COMMAND_SIG(toggle_battery_saver)
+CUSTOM_COMMAND_SIG(kaitsh_toggle_battery_saver)
 CUSTOM_DOC("Toggle the battery saver global variable.")
 {
     global_battery_saver = !global_battery_saver;
 }
 
-CUSTOM_COMMAND_SIG(cut_line)
+CUSTOM_COMMAND_SIG(kaitsh_cut_line)
 CUSTOM_DOC("Cut the line the on which the cursor sits.")
 {
     View_ID view = get_active_view(app, Access_ReadWriteVisible);
@@ -42,7 +42,7 @@ CUSTOM_DOC("Cut the line the on which the cursor sits.")
     }
 }
 
-CUSTOM_UI_COMMAND_SIG(jump_to_definition_of_identifier)
+CUSTOM_UI_COMMAND_SIG(kaitsh_jump_to_definition_of_identifier)
 CUSTOM_DOC("Jump to the definition of the keyword under the cursor.")
 {
     char *query = "Definition:";
@@ -100,6 +100,99 @@ CUSTOM_DOC("Jump to the definition of the keyword under the cursor.")
         View_ID view = get_this_ctx_view(app, Access_Always);
         jump_to_location(app, view, result.buffer, result.pos);
     }
+}
+
+internal void
+KaitshResizeView(Application_Links *app, View_ID view, f32 lines)
+{
+    Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+    Face_ID face_id = get_face_id(app, buffer);
+    Face_Metrics metrics = get_face_metrics(app, face_id);
+    view_set_split_pixel_size(app, view, (i32)(metrics.line_height*lines));
+}
+
+internal void
+Kaitsh4coderSideBySidePanels(Application_Links *app,
+                             Buffer_Identifier left, Buffer_Identifier right, String_Const_u8_Array file_names)
+{
+    if (file_names.count > 0){
+        left = buffer_identifier(file_names.vals[0]);
+        if (file_names.count > 1){
+            right = buffer_identifier(file_names.vals[1]);
+        }
+    }
+    
+    Buffer_ID left_id = buffer_identifier_to_id(app, left);
+    Buffer_ID right_id = buffer_identifier_to_id(app, right);
+    
+    // Left Panel
+    View_ID view = get_active_view(app, Access_Always);
+    new_view_settings(app, view);
+    view_set_buffer(app, view, left_id, 0);
+    
+    // Bottom Panel (Build Panel)
+    View_ID bottom_view = get_or_open_build_panel(app);
+    // Hide view
+    KaitshResizeView(app, bottom_view, 0.f);
+    
+    // Right Panel
+    open_panel_vsplit(app);
+    View_ID right_view = get_active_view(app, Access_Always);
+    view_set_buffer(app, right_view, right_id, 0);
+    
+    // Restore Active to Left
+    view_set_active(app, view);
+}
+
+
+
+CUSTOM_COMMAND_SIG(kaitsh_startup)
+CUSTOM_DOC("Kaitshs command for responding to a startup event")
+{
+    ProfileScope(app, "[kaitsh] startup");
+    User_Input input = get_current_input(app);
+    if (match_core_code(&input, CoreCode_Startup)){
+        String_Const_u8_Array file_names = input.event.core.file_names;
+        load_themes_default_folder(app);
+        default_4coder_initialize(app, file_names);
+        
+        Buffer_Identifier left = buffer_identifier(string_u8_litexpr("*scratch*"));
+        Buffer_Identifier right = buffer_identifier(string_u8_litexpr("*messages*"));
+        Kaitsh4coderSideBySidePanels(app, left, right, file_names);
+        if (global_config.automatically_load_project){
+            load_project(app);
+        }
+    }
+}
+
+CUSTOM_COMMAND_SIG(kaitsh_minimize_build_panel)
+CUSTOM_DOC("Minimize build panel at bottom")
+{
+    View_ID special_view = get_or_open_build_panel(app);
+    KaitshResizeView(app, special_view, 0.f);
+}
+
+CUSTOM_COMMAND_SIG(kaitsh_restore_build_panel)
+CUSTOM_DOC("Change to build panel at default height")
+{
+    View_ID special_view = get_or_open_build_panel(app);
+    KaitshResizeView(app, special_view, 14.f);
+}
+
+CUSTOM_COMMAND_SIG(kaitsh_build_in_build_panel)
+CUSTOM_DOC("Looks for a build.bat, build.sh, or makefile in the current and parent directories.  Runs the first that it finds and prints the output to *compilation*.  Puts the *compilation* buffer in a panel at the footer of the current view.")
+{
+    View_ID view = get_active_view(app, Access_Always);
+    Buffer_ID buffer = view_get_buffer(app, view, Access_Always);
+    
+    View_ID build_view = get_or_open_build_panel(app);
+    KaitshResizeView(app, build_view, 14.f);
+    
+    standard_search_and_build(app, build_view, buffer);
+    set_fancy_compilation_buffer_font(app);
+    
+    block_zero_struct(&prev_location);
+    lock_jump_buffer(app, string_u8_litexpr("*compilation*"));
 }
 
 internal void
