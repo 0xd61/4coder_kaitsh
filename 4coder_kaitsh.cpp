@@ -6,6 +6,7 @@
 - [X] Project list and quick select
 - [X] Smooth cursor (fleury)
 - [X] Calc in Comments
+- [ ] Calulate/Render only once
 - [ ] Elixir Language
 
 */
