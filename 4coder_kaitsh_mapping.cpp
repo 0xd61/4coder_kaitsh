@@ -7,7 +7,7 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     SelectMapping(mapping);
     
     SelectMap(global_id);
-    BindCore(kaitsh_startup, CoreCode_Startup);
+    BindCore(default_startup, CoreCode_Startup);
     BindCore(default_try_exit, CoreCode_TryExit);
     BindCore(clipboard_record_clip, CoreCode_NewClipboardContents);
     Bind(keyboard_macro_start_recording , KeyCode_U, KeyCode_Control);
@@ -22,11 +22,11 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
     Bind(interactive_switch_buffer,     KeyCode_I, KeyCode_Control);
     Bind(project_go_to_root_directory,  KeyCode_H, KeyCode_Control);
     Bind(save_all_dirty_buffers,        KeyCode_S, KeyCode_Control, KeyCode_Shift);
-    //Bind(change_to_build_panel,         KeyCode_Period, KeyCode_Alt);
-    //Bind(close_build_panel,             KeyCode_Comma, KeyCode_Alt);
+    Bind(change_to_build_panel,         KeyCode_Period, KeyCode_Alt);
+    Bind(close_build_panel,             KeyCode_Comma, KeyCode_Alt);
     Bind(goto_next_jump,                KeyCode_N, KeyCode_Alt);
     Bind(goto_prev_jump,                KeyCode_N, KeyCode_Alt, KeyCode_Shift);
-    //Bind(build_in_build_panel,          KeyCode_M, KeyCode_Alt);
+    Bind(build_in_build_panel,          KeyCode_M, KeyCode_Alt);
     Bind(goto_first_jump,               KeyCode_M, KeyCode_Alt, KeyCode_Shift);
     Bind(toggle_filebar,                KeyCode_B, KeyCode_Alt);
     Bind(execute_any_cli,               KeyCode_Z, KeyCode_Alt);
@@ -60,9 +60,6 @@ KaitshSetCustomMapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_id
         Bind(project_lister, KeyCode_P, KeyCode_Shift, KeyCode_Control);
         Bind(jump_to_definition, KeyCode_J, KeyCode_Control);
         Bind(kaitsh_jump_to_definition_of_identifier, KeyCode_J, KeyCode_Control, KeyCode_Shift);
-        Bind(kaitsh_minimize_build_panel, KeyCode_Comma, KeyCode_Alt);
-        Bind(kaitsh_restore_build_panel, KeyCode_Period, KeyCode_Alt);
-        Bind(kaitsh_build_in_build_panel, KeyCode_M, KeyCode_Alt);
     }
     
     SelectMap(file_id);
