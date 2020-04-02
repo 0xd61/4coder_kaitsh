@@ -184,9 +184,16 @@ KaitshDrawFileBar(Application_Links *app, View_ID view_id, Buffer_ID buffer, Fac
     draw_fancy_line(app, face_id, fcolor_zero(), &list, p);
 }
 
+internal b32
+KaitshStringMatchPrefix(String_Const_u8 String, String_Const_u8 Input)
+{
+    String_Const_u8 Prefix = string_prefix(String, Input.size);
+    return(string_match(Prefix, Input));
+}
+
 internal void
 KaitshDrawCommentHighlights(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_layout_id,
-                            Token_Array *array, String_Const_u8 identifier, ARGB_Color color)
+                            Token_Array *array, String_Const_u8 prefix, ARGB_Color color)
 {
     Scratch_Block scratch(app);
     Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
@@ -204,27 +211,35 @@ KaitshDrawCommentHighlights(Application_Links *app, Buffer_ID buffer, Text_Layou
         if (token_it_check_and_get_lexeme(app, scratch, &it, TokenBaseKind_Comment, &tail))
         {
             Range_i64 highlight = {-1, -1};
-            for (i64 index = token->pos;
+            i64 index = 0;
+            for (index = token->pos;
                  tail.size > 0;
                  tail = string_skip(tail, 1), index += 1)
             {
-                String_Const_u8 prefix = string_prefix(tail, identifier.size);
-                if (string_match(prefix, identifier))
+                if (KaitshStringMatchPrefix(tail, prefix))
                 {
                     highlight.start = index;
-                    index += identifier.size -1;
-                }
-                
-                prefix = string_prefix(tail, 1);
-                if((highlight.start >= 0) && (string_match(prefix, string_u8_litexpr(" ")) ||
-                                              string_match(prefix, string_u8_litexpr("\n"))))
-                {
+                    highlight.end = -1;
+                    index += prefix.size -1;
+                    tail = string_skip(tail, prefix.size - 1);
+                    
+                    while((tail.size > 0) && (!KaitshStringMatchPrefix(tail, string_u8_litexpr(" ")) && !KaitshStringMatchPrefix(tail, string_u8_litexpr("\n")) &&
+                                              !KaitshStringMatchPrefix(tail, string_u8_litexpr("*/"))))
+                    {
+                        tail = string_skip(tail, 1);
+                        index += 1;
+                    }
+                    
                     highlight.end = index;
                     paint_text_color(app, text_layout_id, highlight, color);
-                    tail = string_skip(tail, 1);
-                    highlight = {-1, -1};
                 }
             }
+            if(highlight.start >= 0 && highlight.end < 0)
+            {
+                highlight.end = index - 1;
+                paint_text_color(app, text_layout_id, highlight, color);
+            }
+            
         }
         if (!token_it_inc_non_whitespace(&it))
         {
