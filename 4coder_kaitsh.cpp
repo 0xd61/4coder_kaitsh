@@ -185,6 +185,55 @@ KaitshDrawFileBar(Application_Links *app, View_ID view_id, Buffer_ID buffer, Fac
 }
 
 internal void
+KaitshDrawCommentHighlights(Application_Links *app, Buffer_ID buffer, Text_Layout_ID text_layout_id,
+                            Token_Array *array, String_Const_u8 identifier, ARGB_Color color)
+{
+    Scratch_Block scratch(app);
+    Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
+    i64 first_index = token_index_from_pos(array, visible_range.first);
+    Token_Iterator_Array it = token_iterator_index(buffer, array, first_index);
+    for (;;)
+    {
+        Temp_Memory_Block temp(scratch);
+        Token *token = token_it_read(&it);
+        if (token->pos >= visible_range.one_past_last)
+        {
+            break;
+        }
+        String_Const_u8 tail = {};
+        if (token_it_check_and_get_lexeme(app, scratch, &it, TokenBaseKind_Comment, &tail))
+        {
+            Range_i64 highlight = {-1, -1};
+            for (i64 index = token->pos;
+                 tail.size > 0;
+                 tail = string_skip(tail, 1), index += 1)
+            {
+                String_Const_u8 prefix = string_prefix(tail, identifier.size);
+                if (string_match(prefix, identifier))
+                {
+                    highlight.start = index;
+                    index += identifier.size -1;
+                }
+                
+                prefix = string_prefix(tail, 1);
+                if((highlight.start >= 0) && (string_match(prefix, string_u8_litexpr(" ")) ||
+                                              string_match(prefix, string_u8_litexpr("\n"))))
+                {
+                    highlight.end = index;
+                    paint_text_color(app, text_layout_id, highlight, color);
+                    tail = string_skip(tail, 1);
+                    highlight = {-1, -1};
+                }
+            }
+        }
+        if (!token_it_inc_non_whitespace(&it))
+        {
+            break;
+        }
+    }
+}
+
+internal void
 KaitshRenderBuffer(Application_Links *app, View_ID view_id, Face_ID face_id,
                    Buffer_ID buffer, Text_Layout_ID text_layout_id,
                    Rect_f32 rect, Frame_Info frame_info)
@@ -215,7 +264,11 @@ KaitshRenderBuffer(Application_Links *app, View_ID view_id, Face_ID face_id,
             };
             draw_comment_highlights(app, buffer, text_layout_id,
                                     &token_array, pairs, ArrayCount(pairs));
+            
+            // NOTE(dgl): Highlight words prefixed with @@ in comments
+            KaitshDrawCommentHighlights(app, buffer, text_layout_id, &token_array, string_u8_litexpr("@@"), finalize_color(defcolor_comment_pop, 2));
         }
+        
     }
     else{
         paint_text_color_fcolor(app, text_layout_id, visible_range, fcolor_id(defcolor_text_default));
