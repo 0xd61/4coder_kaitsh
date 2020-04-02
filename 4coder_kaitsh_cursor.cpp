@@ -70,7 +70,14 @@ KaitshDrawCursorMarkHighlight(Application_Links *app, View_ID view_id, b32 is_ac
             
             FleuryDoTheCursorInterpolation(app, frame_info, &rect,
                                            &last_rect, target_rect);
-            draw_rectangle_fcolor(app, rect, roundness, fcolor_id(defcolor_cursor));
+            if(global_keyboard_macro_is_recording)
+            {
+                draw_rectangle_fcolor(app, rect, roundness, fcolor_id(defcolor_pop2));
+            }
+            else
+            {
+                draw_rectangle_fcolor(app, rect, roundness, fcolor_id(defcolor_cursor));
+            }
             //draw_character_block(app, text_layout_id, cursor_pos, roundness, fcolor_id(defcolor_cursor, cursor_sub_id));
             paint_text_color_pos(app, text_layout_id, cursor_pos,
                                  fcolor_id(defcolor_at_cursor));

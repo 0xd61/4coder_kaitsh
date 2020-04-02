@@ -170,6 +170,16 @@ KaitshDrawFileBar(Application_Links *app, View_ID view_id, Buffer_ID buffer, Fac
         push_fancy_string(scratch, &list, pop2_color, str.string);
     }
     
+    /*if(global_keyboard_macro_is_recording)
+    {
+        Rect_f32 recording_marker;
+        recording_marker.x0 = bar.x1 - 20.f;
+        recording_marker.x1 = recording_marker.x0 + 10.f;
+        recording_marker.y0 = bar.y0 + ((bar.y1 - bar.y0) / 2) - 5.f;
+        recording_marker.y1 = recording_marker.y0 + 10.f;
+        draw_rectangle_fcolor(app, recording_marker, 5.f, pop2_color);
+    }*/
+    
     Vec2_f32 p = bar.p0 + V2f32(2.f, 2.f);
     draw_fancy_line(app, face_id, fcolor_zero(), &list, p);
 }
