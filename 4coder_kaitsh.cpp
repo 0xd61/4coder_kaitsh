@@ -12,6 +12,7 @@
 */
 
 #if !defined(FCODER_DEFAULT_BINDINGS_CPP)
+#define FCODER_DEFAULT_BINDINGS_CPP
 
 #include "4coder_default_include.cpp"
 #include "generated/managed_id_metadata.cpp"
@@ -101,17 +102,6 @@ CUSTOM_DOC("Jump to the definition of the keyword under the cursor.")
         View_ID view = get_this_ctx_view(app, Access_Always);
         jump_to_location(app, view, result.buffer, result.pos);
     }
-}
-
-
-CUSTOM_UI_COMMAND_SIG(kaitsh_toggle_panel_maximization)
-CUSTOM_DOC("Maximize panel size.")
-{
-    View_ID active_view = get_active_view(app, Access_Always);
-    Rect_f32 region = draw_background_and_margin(app, active_view);
-    
-    printf("region x0 %f, y0 %f, x1 %f, y1 %f\n", region.x0, region.y0);
-    Rect_f32 prev_clip = draw_set_clip(app, region);
 }
 
 internal void
@@ -263,8 +253,8 @@ KaitshRenderBuffer(Application_Links *app, View_ID view_id, Face_ID face_id,
     
     // NOTE(allen): Cursor shape
     Face_Metrics metrics = get_face_metrics(app, face_id);
-    f32 cursor_roundness = (metrics.normal_advance*0.5f)*0.9f;
-    f32 mark_thickness = 2.f;
+    f32 cursor_roundness = metrics.normal_advance*global_config.cursor_roundness;
+    f32 mark_thickness = (f32)global_config.mark_thickness;
     
     // NOTE(allen): Token colorizing
     Token_Array token_array = get_token_array_from_buffer(app, buffer);
@@ -357,7 +347,7 @@ KaitshRenderBuffer(Application_Links *app, View_ID view_id, Face_ID face_id,
     }
     
     // NOTE(allen): Fade ranges
-    paint_fade_ranges(app, text_layout_id, buffer, view_id);
+    paint_fade_ranges(app, text_layout_id, buffer);
     
     // NOTE(allen): put the actual text on the actual screen
     draw_text_layout_default(app, text_layout_id);
@@ -448,8 +438,11 @@ custom_layer_init(Application_Links *app)
     set_all_default_hooks(app);
     set_custom_hook(app, HookID_RenderCaller,  KaitshRenderCaller);
     mapping_init(tctx, &framework_mapping);
+#if OS_MAC
+    setup_mac_mapping(&framework_mapping, mapid_global, mapid_file, mapid_code);
+#else
     KaitshSetCustomMapping(&framework_mapping, mapid_global, mapid_file, mapid_code);
+#endif
 }
 
-#define FCODER_DEFAULT_BINDINGS_CPP
 #endif
