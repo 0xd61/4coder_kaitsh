@@ -66,10 +66,20 @@ KaitshDrawCursorMarkHighlight(Application_Links *app, View_ID view_id, b32 is_ac
             local_persist Rect_f32 rect = {0};
             Rect_f32 last_rect = rect;
             
+            Rect_f32 view_rect = view_get_screen_rect(app, view_id);
             Rect_f32 target_rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
+            Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
+            
+            if(cursor_pos < visible_range.start || cursor_pos > visible_range.end)
+            {
+                f32 width = target_rect.x1 - target_rect.x0;
+                target_rect.x0 = view_rect.x0;
+                target_rect.x1 = target_rect.x0 + width;
+            }
             
             FleuryDoTheCursorInterpolation(app, frame_info, &rect,
                                            &last_rect, target_rect);
+            
             if(global_keyboard_macro_is_recording)
             {
                 draw_rectangle_fcolor(app, rect, roundness, fcolor_id(defcolor_pop2));
